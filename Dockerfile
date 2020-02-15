@@ -1,41 +1,52 @@
-FROM haskell:8.6.5 as pandoc-builder
+FROM ubuntu:18.04 as pandoc-builder
 
 MAINTAINER Bogi Napoleon Wennerstrøm <bogi.wennerstrom@gmail.com>
 
+RUN apt-get update
+
+# install essentials
+RUN apt-get install -y -o Acquire::Retries=10 --no-install-recommends \
+    software-properties-common \
+    pkg-config \
+    build-essential \
+    make \
+    zlib1g-dev \
+    wget
+
 # install latex packages
-RUN apt-get update -y \
-  && apt-get install -y -o Acquire::Retries=10 --no-install-recommends \
-    texlive-latex-base \
-    texlive-xetex latex-xcolor \
-    texlive-math-extra \
+RUN apt-get install -y -o Acquire::Retries=10 --no-install-recommends \
+    lmodern \
+    texlive-latex-recommended \
+    texlive-fonts-recommended \
     texlive-latex-extra \
-    texlive-fonts-extra \
+    texlive-generic-extra \
+    texlive-science \
     texlive-bibtex-extra \
     fontconfig \
-    lmodern \
     python-dev \
     python-pip
 
-# will ease up the update process
-# updating this env variable will trigger the automatic build of the Docker image
-ENV PANDOC_VERSION "2.9.1.1"
+# setup python
+RUN wget https://bootstrap.pypa.io/ez_setup.py -O - | python
+RUN pip2 install setuptools 
+RUN pip2 install wheel 
+RUN pip2 install pandocfilters
 
-RUN cabal new-update
-RUN cabal new-install cabal-install
-RUN cabal user-config update
-RUN cabal new-configure
-RUN cabal new-install --reorder-goals --max-backjumps=-1 \
-                      --constraint=pandoc==${PANDOC_VERSION}\
-                      pandoc \
-                      pandoc-citeproc \
-                      pandoc-citeproc-preamble \
-                      pandoc-crossref
+# install pandoc
+RUN wget https://github.com/jgm/pandoc/releases/download/2.9.1.1/pandoc-2.9.1.1-1-amd64.deb
+RUN apt-get install -y ./pandoc-2.9.1.1-1-amd64.deb
+RUN rm pandoc-2.9.1.1-1-amd64.deb
 
-# install pandoc figure numberings
-#RUN python -m pip install --upgrade setuptools
-#RUN pip install pandoc-fignos
-#RUN pip install pandoc-eqnos
-#RUN pip install pandoc-tablenos
+# install crossref
+RUN wget https://github.com/lierdakil/pandoc-crossref/releases/download/v0.3.6.1b/linux-pandoc_2_9_1_1.tar.gz
+RUN tar -xvf linux-pandoc_2_9_1_1.tar.gz
+RUN mv pandoc-crossref /usr/bin/
+RUN rm linux-pandoc_2_9_1_1.tar.gz
+
+# setup python filters
+RUN pip install pandoc-fignos
+RUN pip install pandoc-eqnos
+RUN pip install pandoc-tablenos
 
 WORKDIR /source
 
