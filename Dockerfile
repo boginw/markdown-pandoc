@@ -1,4 +1,4 @@
-FROM haskell:8.0
+FROM haskell:8.6.5 as pandoc-builder
 
 MAINTAINER Bogi Napoleon Wennerstrøm <bogi.wennerstrom@gmail.com>
 
@@ -18,14 +18,18 @@ RUN apt-get update -y \
 
 # will ease up the update process
 # updating this env variable will trigger the automatic build of the Docker image
-ENV PANDOC_VERSION "1.19.2.1"
+ENV PANDOC_VERSION "2.9.1.1"
 
-# install pandoc
-RUN cabal update 
-RUN cabal install pandoc-${PANDOC_VERSION} 
-RUN cabal install pandoc-citeproc
-RUN cabal install pandoc-crossref
-RUN cabal install pandoc-include
+RUN cabal new-update
+RUN cabal new-install cabal-install
+RUN cabal user-config update
+RUN cabal new-configure
+RUN cabal new-install --reorder-goals --max-backjumps=-1 \
+                      --constraint=pandoc==${PANDOC_VERSION}\
+                      pandoc \
+                      pandoc-citeproc \
+                      pandoc-citeproc-preamble \
+                      pandoc-crossref
 
 # install pandoc figure numberings
 #RUN python -m pip install --upgrade setuptools
