@@ -24,7 +24,10 @@ RUN apt-get install -y -o Acquire::Retries=10 --no-install-recommends \
     texlive-bibtex-extra \
     fontconfig \
     python-dev \
-    python-pip
+    python-pip \
+    aspell \
+    aspell-en \
+    unzip
 
 # setup python
 RUN wget https://bootstrap.pypa.io/ez_setup.py -O - | python
@@ -47,6 +50,23 @@ RUN rm linux-pandoc_2_9_1_1.tar.gz
 RUN pip install pandoc-fignos
 RUN pip install pandoc-eqnos
 RUN pip install pandoc-tablenos
+
+# Get some more filters
+WORKDIR /filters
+RUN wget https://github.com/pandoc/lua-filters/archive/master.zip
+RUN unzip master.zip
+RUN rm master.zip
+RUN mv lua-filters-master/* .
+RUN rm -r lua-filters-master
+RUN wget https://github.com/01mf02/pandocfilters/archive/master.zip
+RUN unzip master.zip
+RUN rm master.zip
+RUN mv pandocfilters-master/* .
+RUN rm -r pandocfilters-master
+
+# Cleanup unused dependencies
+RUN apt-get remove -y wget unzip
+RUN apt-get autoremove -y
 
 WORKDIR /source
 
