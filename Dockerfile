@@ -18,6 +18,7 @@ RUN apt-get install -y -o Acquire::Retries=10 --no-install-recommends \
     lmodern \
     texlive-latex-recommended \
     texlive-fonts-recommended \
+    texlive-fonts-extra \
     texlive-latex-extra \
     texlive-generic-extra \
     texlive-science \
